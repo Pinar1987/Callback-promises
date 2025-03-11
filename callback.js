@@ -1,67 +1,64 @@
 
-function coinFlip() {
-    return new Promise((resolve, reject) => {
+
+const coinFlip = async () => {
+    try {
         const flip = Math.random() > 0.5;
         if (flip) {
-            resolve("You win!");
-        } else {
-            reject("You lose!");
+            return "You win!";
+            throw new Error("You lose!");
         }
-    });
-}
+    } catch (error) {
+        throw error;
+    };
 
 
-function fetchAdvice() {
-    return new Promise((resolve, reject) => {
-        fetch('https://api.adviceslip.com/advice')
-            .then(response => {
-                if (!response.ok) {
-                    reject('Failed to fetch advice');
-                }
-                return response.json();
-            })
-            .then(data => {
-                resolve(data.slip.advice);
-            })
-            .catch(error => {
-                reject(error);
-            });
-    });
-}
+    const fetchAdvice = async () => {
+        try {
+            const response = await fetch('https://api.adviceslip.com/advice');
+            if (!response.ok) {
+                throw new Error('Failed to fetch advice');
+            }
+            const data = await response.json();
+            return data.slip.advice;
+        } catch (error) {
+            throw error;
+        }
+    };
 
 
-function fetchAdviceById(id) {
-    const url = id ? `https://api.adviceslip.com/advice/${id}` : 'https://api.adviceslip.com/advice';
+    const fetchAdviceById = async (id) => {
+        try {
+            const response = await fetch(`https://api.adviceslip.com/advice/${id}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch advice');
+            }
+            const data = await response.json();
+            console.log(`Advice with id ${id}: ${data.slip.advice}`);
+        } catch (error) {
+            console.log(error);
+        }
+    };
 
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('advice-result').textContent = data.slip.advice;
-        })
-        .catch(error => {
-            document.getElementById('advice-result').textContent = 'Error fetching advice: ' + error;
-        });
-}
 
-
-function coinFlipAndFetchAdvice() {
-    coinFlip()
-        .then(result => {
+    const coinFlipAndFetchAdvice = async () => {
+        try {
+            const result = await coinFlip();
             document.getElementById('flip-result').textContent = result;
-            return fetchAdvice();
-        })
-        .then(advice => {
-            document.getElementById('advice-result').textContent = advice;
-        })
-        .catch(error => {
-            document.getElementById('flip-result').textContent = error;
-        });
+
+            if (result === "You win!") {
+                const advice = await fetchAdvice();
+                document.getElementById('advice-result').textContent = advice;
+            }
+        } catch (error) {
+            document.getElementById('flip-result').textContent = error.message; // display error message
+        }
+    };
+
+
+    document.getElementById('flip-btn').addEventListener('click', coinFlipAndFetchAdvice);
+
+    document.getElementById('fetch-advice-btn').addEventListener('click', () => {
+        const adviceId = document.getElementById('advice-id').value;
+        fetchAdviceById(adviceId);
+    });
 }
-
-
-document.getElementById('flip-btn').addEventListener('click', coinFlipAndFetchAdvice);
-
-document.getElementById('fetch-advice-btn').addEventListener('click', () => {
-    const adviceId = document.getElementById('advice-id').value;
-    fetchAdviceById(adviceId);
-});
